@@ -1,0 +1,9 @@
+flask
+tensorflow
+numpy
+opencv-python
+joblib
+scikit-learn
+scikit-image
+tqdm
+openpyxl

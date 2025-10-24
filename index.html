@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>DeepFake Detector</title>
+  <style>
+    body { background:#111; color:#eee; font-family:sans-serif; text-align:center; margin-top:80px; }
+    .card { display:inline-block; background:#222; padding:20px; border-radius:10px; box-shadow:0 0 20px #333; }
+    button { background:#00adb5; border:none; padding:10px 20px; color:#fff; border-radius:5px; cursor:pointer; }
+    img { margin-top:15px; border-radius:10px; width:300px; }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <h2>🕵️ DeepFake Detector</h2>
+    <form method="POST" enctype="multipart/form-data">
+      <input type="file" name="image" accept="image/*" required><br><br>
+      <button type="submit">Check</button>
+    </form>
+
+    {% if label %}
+      <h3>Prediction: {{ label }}</h3>
+      <p>Confidence: {{ confidence }}%</p>
+      <img src="{{ image_path }}" alt="Uploaded Image">
+    {% elif error %}
+      <p style="color:red;">{{ error }}</p>
+    {% endif %}
+  </div>
+</body>
+</html>
