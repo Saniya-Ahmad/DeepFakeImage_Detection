@@ -1,30 +1,480 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
+  <meta charset="UTF-8" />
   <title>DeepFake Detector</title>
+
+  <!-- Google Font -->
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet">
+
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+
   <style>
-    body { background:#111; color:#eee; font-family:sans-serif; text-align:center; margin-top:80px; }
-    .card { display:inline-block; background:#222; padding:20px; border-radius:10px; box-shadow:0 0 20px #333; }
-    button { background:#00adb5; border:none; padding:10px 20px; color:#fff; border-radius:5px; cursor:pointer; }
-    img { margin-top:15px; border-radius:10px; width:300px; }
+    :root{
+      --accent: #00e0df;
+      --accent-2: #00adb5;
+      --bg-1: #070707;
+      --bg-2: #0f1720;
+      --glass: rgba(255,255,255,0.04);
+      --card-edge: rgba(255,255,255,0.06);
+      --muted: #bfc7cf;
+    }
+
+    /* Animated gradient background */
+    html,body{
+      height:100%;
+      margin:0;
+      font-family: 'Poppins', sans-serif;
+      background: linear-gradient(120deg, #070707 0%, #0b1220 40%, #08101a 100%);
+      background-size: 400% 400%;
+      animation: gradientShift 18s ease infinite;
+      color: #ecf0f1;
+    }
+    @keyframes gradientShift{
+      0%{background-position:0% 50%;}
+      50%{background-position:100% 50%;}
+      100%{background-position:0% 50%;}
+    }
+
+    /* Particle canvas sits behind everything */
+    #particle-canvas{
+      position:fixed;
+      inset:0;
+      z-index:0;
+      pointer-events:none;
+      opacity:0.25;
+      mix-blend-mode: screen;
+    }
+
+    .wrap {
+      min-height:100vh;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      z-index:1;
+      position:relative;
+      padding:40px 20px;
+    }
+
+    /* Entry animation for the card */
+    .card {
+      position:relative;
+      z-index:2;
+      width:100%;
+      max-width:560px;
+      background: linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));
+      border-radius:16px;
+      padding:28px;
+      box-shadow: 0 10px 40px rgba(3,10,14,0.7), 0 0 50px rgba(0, 173, 181, 0.06);
+      border: 1px solid var(--card-edge);
+      backdrop-filter: blur(8px) saturate(120%);
+      transition: transform .45s cubic-bezier(.2,.9,.3,1), box-shadow .3s ease;
+      transform: translateY(10px) scale(.995);
+      animation: cardIn .6s ease forwards;
+    }
+    .card:hover { transform: translateY(-6px) scale(1.004); box-shadow: 0 18px 60px rgba(3,10,14,0.85); }
+
+    @keyframes cardIn {
+      from { opacity:0; transform: translateY(20px) scale(.98) }
+      to   { opacity:1; transform: translateY(0) scale(1) }
+    }
+
+    .header {
+      text-align:center;
+      margin-bottom:8px;
+    }
+    h2 {
+      margin:0;
+      font-weight:600;
+      letter-spacing:0.6px;
+      color: #e9fbfb;
+      text-shadow: 0 2px 14px rgba(0, 173, 181, 0.06);
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      gap:10px;
+    }
+    .brand-dot{
+      width:12px; height:12px; border-radius:50%;
+      background: linear-gradient(135deg, var(--accent), var(--accent-2));
+      box-shadow: 0 0 14px rgba(0,173,181,0.55);
+      transform:translateY(-1px);
+    }
+    .subtitle{ font-size:13px; color:var(--muted); margin-top:6px; }
+
+    form {
+      margin-top:18px;
+      display:flex;
+      flex-direction:column;
+      align-items:center;
+      gap:12px;
+    }
+
+    /* file input custom wrapper */
+    .file-row {
+      width:100%;
+      display:flex;
+      gap:12px;
+      align-items:center;
+      justify-content:center;
+      flex-wrap:wrap;
+    }
+
+    /* visually pleasing input */
+    .file-label {
+      display:inline-flex;
+      align-items:center;
+      gap:10px;
+      padding:10px 14px;
+      background: rgba(255,255,255,0.02);
+      border-radius:10px;
+      border:1px dashed rgba(255,255,255,0.04);
+      cursor:pointer;
+      color:var(--muted);
+      width: calc(100% - 140px);
+      max-width: 380px;
+      justify-content:center;
+      transition: all .2s ease;
+    }
+    .file-label:hover{ transform: translateY(-3px); border-color: rgba(0,173,181,0.25); color: #dff7f7; }
+
+    input[type="file"]{
+      display:none;
+    }
+
+    /* preview mini */
+    .preview {
+      width:120px;
+      height:80px;
+      border-radius:8px;
+      overflow:hidden;
+      background: linear-gradient(180deg, rgba(255,255,255,0.015), rgba(255,255,255,0.01));
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      border: 1px solid rgba(255,255,255,0.03);
+    }
+    .preview img{ width:100%; height:100%; object-fit:cover; display:block; }
+
+    /* neon button */
+    button[type="submit"]{
+      appearance:none;
+      -webkit-appearance:none;
+      border: none;
+      padding:12px 22px;
+      border-radius:10px;
+      font-weight:600;
+      cursor:pointer;
+      color: #041014;
+      background: linear-gradient(135deg, var(--accent), var(--accent-2));
+      box-shadow: 0 6px 30px rgba(0,173,181,0.18), 0 0 20px rgba(0,173,181,0.06) inset;
+      transition: transform .16s ease, box-shadow .16s ease;
+      letter-spacing:0.4px;
+      min-width:120px;
+    }
+    button[type="submit"]:hover{
+      transform: translateY(-3px) scale(1.02);
+      box-shadow: 0 10px 40px rgba(0,173,181,0.22), 0 0 38px rgba(0,173,181,0.12) inset;
+    }
+    button[disabled]{
+      opacity:0.6;
+      cursor:not-allowed;
+      transform:none;
+      box-shadow:none;
+    }
+
+    /* progress bar (fake) */
+    .progress-wrap{
+      width:100%;
+      margin-top:8px;
+      height:8px;
+      background: linear-gradient(90deg, rgba(255,255,255,0.02), rgba(255,255,255,0.015));
+      border-radius:8px;
+      overflow:hidden;
+      border:1px solid rgba(255,255,255,0.02);
+      display:none;
+    }
+    .progress {
+      height:100%;
+      width:0%;
+      background: linear-gradient(90deg, rgba(0,173,181,0.18), rgba(0,224,223,0.22));
+      box-shadow: 0 4px 18px rgba(0,173,181,0.12);
+      transition: width .2s linear;
+    }
+    .progress-text{ font-size:12px; color:var(--muted); margin-top:6px; display:none; }
+
+    /* spinner overlay */
+    .overlay {
+      position: absolute;
+      inset:0;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      background: linear-gradient(180deg, rgba(2,6,8,0.6), rgba(2,6,8,0.65));
+      border-radius:16px;
+      z-index:6;
+      opacity:0;
+      pointer-events:none;
+      transition:opacity .18s ease;
+    }
+    .overlay.show{ opacity:1; pointer-events:auto; }
+
+    .spinner {
+      width:72px; height:72px; border-radius:50%;
+      display:flex;align-items:center;justify-content:center;
+      background: radial-gradient(circle at 30% 20%, rgba(255,255,255,0.02), transparent 35%);
+      box-shadow: 0 10px 40px rgba(0,0,0,0.6), 0 0 40px rgba(0,173,181,0.06);
+      position:relative;
+    }
+    .spinner:before {
+      content:"";
+      position:absolute;
+      inset:8px;
+      border-radius:50%;
+      border:3px solid rgba(255,255,255,0.04);
+    }
+    /* animated ring */
+    .ring {
+      width:58px; height:58px; border-radius:50%;
+      border:4px solid transparent;
+      border-top-color:var(--accent);
+      border-right-color:var(--accent-2);
+      animation: spin 1s linear infinite;
+      box-shadow: 0 0 20px rgba(0,173,181,0.18);
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* result area kept similar to your template */
+    .result-block { margin-top:18px; text-align:center; }
+
+    .result-image {
+      margin-top:14px;
+      width:320px;
+      max-width:100%;
+      border-radius:12px;
+      border:1px solid rgba(255,255,255,0.04);
+      box-shadow: 0 10px 30px rgba(0,0,0,0.6), 0 0 30px rgba(0,173,181,0.06);
+    }
+
+    .error { color:#ff7b7b; font-weight:600; }
+
+    /* small helper on mobile */
+    @media (max-width:480px){
+      .file-label{ width:100%; }
+      .preview{ width:90px; height:64px; }
+      .card{ padding:18px; border-radius:12px; }
+    }
   </style>
 </head>
 <body>
-  <div class="card">
-    <h2>DeepFake Detector</h2>
-    <form method="POST" enctype="multipart/form-data">
-      <input type="file" name="image" accept="image/*" required><br><br>
-      <button type="submit">Check</button>
-    </form>
+  <!-- particle canvas -->
+  <canvas id="particle-canvas" aria-hidden="true"></canvas>
 
-    {% if label %}
-      <h3>Prediction: {{ label }}</h3>
-      // <p>Confidence: {{ confidence }}%</p>
-      <img src="{{ image_path }}" alt="Uploaded Image">
-    {% elif error %}
-      <p style="color:red;">{{ error }}</p>
-    {% endif %}
+  <div class="wrap">
+    <div class="card" role="region" aria-labelledby="title">
+      <div class="header">
+        <h2 id="title"><span class="brand-dot" aria-hidden="true"></span>DeepFake Detector</h2>
+        <div class="subtitle">Quick check — simple UI & polished look</div>
+      </div>
+
+      <!-- overlay spinner -->
+      <div id="overlay" class="overlay" aria-hidden="true">
+        <div class="spinner" role="status" aria-live="polite">
+          <div class="ring" aria-hidden="true"></div>
+        </div>
+      </div>
+
+      <!-- Form (keeps your original attributes) -->
+      <form id="detectForm" method="POST" enctype="multipart/form-data" novalidate>
+        <div class="file-row">
+          <label for="fileInput" class="file-label" title="Choose an image">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true" style="opacity:.9">
+              <path d="M12 3v12" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round" />
+              <path d="M5 12l7-7 7 7" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/>
+              <path d="M21 21H3" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+            <span id="fileLabelText">Choose image…</span>
+            <input id="fileInput" name="image" type="file" accept="image/*" required>
+          </label>
+
+          <div class="preview" id="previewBox" aria-hidden="true">
+            <!-- preview image inserted here -->
+            <span style="font-size:12px;color:var(--muted)">Preview</span>
+          </div>
+        </div>
+
+        <div style="display:flex; gap:12px; align-items:center; justify-content:center; margin-top:6px;">
+          <button id="submitBtn" type="submit">Check</button>
+        </div>
+
+        <div class="progress-wrap" id="progressWrap" aria-hidden="true" role="progressbar" aria-valuemin="0" aria-valuemax="100">
+          <div class="progress" id="progressBar"></div>
+        </div>
+        <div class="progress-text" id="progressText" aria-hidden="true">Uploading: <span id="progressPct">0%</span></div>
+      </form>
+
+      <!-- preserve your Jinja result logic exactly -->
+      <div class="result-block" aria-live="polite">
+        {% if label %}
+          <h3>Prediction: {{ label }}</h3>
+          <!-- <p>Confidence: {{ confidence }}%</p> -->
+          <img class="result-image" src="{{ image_path }}" alt="Uploaded Image">
+        {% elif error %}
+          <p class="error">{{ error }}</p>
+        {% endif %}
+      </div>
+    </div>
   </div>
+
+  <script>
+    /***** Image preview *****/
+    const fileInput = document.getElementById('fileInput');
+    const previewBox = document.getElementById('previewBox');
+    const fileLabelText = document.getElementById('fileLabelText');
+
+    fileInput.addEventListener('change', (e) => {
+      const f = e.target.files && e.target.files[0];
+      if (!f) {
+        previewBox.innerHTML = '<span style="font-size:12px;color:var(--muted)">Preview</span>';
+        fileLabelText.textContent = 'Choose image…';
+        return;
+      }
+      fileLabelText.textContent = f.name.length > 26 ? f.name.slice(0,22) + '…' : f.name;
+
+      const reader = new FileReader();
+      reader.onload = () => {
+        previewBox.innerHTML = `<img src="${reader.result}" alt="preview">`;
+        previewBox.setAttribute('aria-hidden','false');
+      };
+      reader.readAsDataURL(f);
+    });
+
+    /***** Fake progress flow (option B) *****/
+    const form = document.getElementById('detectForm');
+    const overlay = document.getElementById('overlay');
+    const submitBtn = document.getElementById('submitBtn');
+    const progressWrap = document.getElementById('progressWrap');
+    const progressBar = document.getElementById('progressBar');
+    const progressText = document.getElementById('progressText');
+    const progressPct = document.getElementById('progressPct');
+
+    // Simulates a smooth upload progress and then submits the form
+    form.addEventListener('submit', function(ev){
+      // if no file selected, allow normal submission to let server handle (keeps original behaviour)
+      if (!fileInput.files || fileInput.files.length === 0) return;
+
+      ev.preventDefault();
+
+      // show overlay + progress
+      overlay.classList.add('show');
+      progressWrap.style.display = 'block';
+      progressText.style.display = 'block';
+      submitBtn.disabled = true;
+
+      // simple fake progression: quick ramp to 70-90% then slow to 98% then finish
+      let pct = 0;
+      const ramp1Target = 60 + Math.floor(Math.random()*15); // 60-74
+      const ramp2Target = 90 + Math.floor(Math.random()*7);  // 90-96
+      const interval = 120; // ms step
+
+      // stage 1 - accelerate to ramp1Target
+      const step1 = setInterval(()=>{
+        pct += 2 + Math.random()*3;
+        if (pct >= ramp1Target) {
+          pct = ramp1Target;
+          clearInterval(step1);
+          // stage 2 - gentle increase to ramp2Target
+          const step2 = setInterval(()=>{
+            pct += 0.6 + Math.random()*0.9;
+            if (pct >= ramp2Target) {
+              pct = ramp2Target;
+              clearInterval(step2);
+              // stage 3 - very slow creep to 98
+              const step3 = setInterval(()=>{
+                pct += 0.12 + Math.random()*0.35;
+                if (pct >= 98) {
+                  pct = 100;
+                  clearInterval(step3);
+                  // small delay so user sees 100%
+                  setTimeout(()=> finalizeSubmit(), 350);
+                }
+                updateProgress(pct);
+              }, 220);
+            }
+            updateProgress(pct);
+          }, 220);
+        }
+        updateProgress(pct);
+      }, interval);
+    });
+
+    function updateProgress(value){
+      value = Math.min(100, Math.round(value));
+      progressBar.style.width = value + '%';
+      progressPct.textContent = value + '%';
+    }
+
+    function finalizeSubmit(){
+      // ensure 100% visible
+      updateProgress(100);
+      progressPct.textContent = '100%';
+      // give a short breathing room, then actually submit the form (so backend receives file)
+      setTimeout(()=>{
+        // remove overlay and reset button so user doesn't get stuck if page doesn't navigate
+        // but first try to submit programmatically
+        overlay.classList.remove('show');
+        // NOTE: use the native submit to avoid re-triggering the submit event listener
+        submitBtn.disabled = false;
+        form.removeEventListener('submit', arguments.callee);
+        form.submit();
+      }, 280);
+    }
+
+    /***** Simple particle background (canvas) *****/
+    (function(){
+      const canvas = document.getElementById('particle-canvas');
+      if (!canvas) return;
+      const ctx = canvas.getContext('2d');
+      let w = canvas.width = innerWidth;
+      let h = canvas.height = innerHeight;
+      const particles = [];
+      const PARTICLE_COUNT = Math.floor((w*h)/90000); // scales with screen area
+      for (let i=0;i<PARTICLE_COUNT;i++){
+        particles.push({
+          x: Math.random()*w,
+          y: Math.random()*h,
+          r: 0.6 + Math.random()*2.6,
+          vx: (Math.random()-0.5)*0.15,
+          vy: (Math.random()-0.5)*0.25,
+          opacity: 0.05 + Math.random()*0.15
+        });
+      }
+
+      function resize(){ w=canvas.width=innerWidth; h=canvas.height=innerHeight; }
+      addEventListener('resize', resize);
+
+      function draw(){
+        ctx.clearRect(0,0,w,h);
+        for (let p of particles){
+          p.x += p.vx; p.y += p.vy;
+          if (p.x < -20) p.x = w+20;
+          if (p.x > w+20) p.x = -20;
+          if (p.y < -20) p.y = h+20;
+          if (p.y > h+20) p.y = -20;
+          ctx.beginPath();
+          ctx.fillStyle = `rgba(0,224,223,${p.opacity})`;
+          ctx.arc(p.x, p.y, p.r, 0, Math.PI*2);
+          ctx.fill();
+        }
+        requestAnimationFrame(draw);
+      }
+      draw();
+    })();
+
+    /***** Accessibility: allow label click to focus input (already default) and keyboard submit *****/
+    // (no extra code required)
+
+  </script>
 </body>
 </html>
+
