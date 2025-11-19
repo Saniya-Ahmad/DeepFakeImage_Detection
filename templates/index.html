@@ -1,79 +1,150 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-    <title>Professional Section</title>
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            background: #f5f5f5;
-            margin: 0;
-            padding: 20px;
-        }
+  <meta charset="UTF-8">
+  <title>DeepFake Detector</title>
 
-        .navbar {
-            background-color: navy;
-            padding: 15px;
-            color: white;
-            font-size: 20px;
-            text-align: center;
-            font-weight: bold;
-        }
+  <style>
+    body {
+      background: linear-gradient(145deg, #0a0a0a, #1e1e1e, #000000);
+      background-size: 200% 200%;
+      animation: bgMove 10s infinite alternate ease-in-out;
+      color: #f1f1f1;
+      font-family: "Poppins", sans-serif;
+      text-align: center;
+      padding-top: 80px;
+      margin: 0;
+    }
 
-        .section {
-            background: #e0f0ff;
-            padding: 20px;
-            margin-top: 20px;
-            border: 2px solid black;
-            border-radius: 10px;
-        }
+    @keyframes bgMove {
+      0% { background-position: 0% 50%; }
+      100% { background-position: 100% 50%; }
+    }
 
-        .section h2 {
-            margin-top: 0;
-            color: black;
-        }
+    .title {
+      font-size: 32px;
+      margin-bottom: 35px;
+      font-weight: 600;
+      letter-spacing: 2px;
+      text-shadow: 0 0 12px rgba(0, 173, 181, 0.7), 
+                   0 0 25px rgba(0, 173, 181, 0.3);
+    }
 
-        .icon {
-            font-weight: bold;
-            color: red;
-            margin-right: 8px;
-        }
+    .card {
+      display: inline-block;
+      padding: 40px 55px;
+      background: rgba(30, 30, 30, 0.85);
+      border-radius: 20px;
+      box-shadow: 0 10px 40px rgba(0,0,0,0.6), 
+                  inset 0 0 18px rgba(0, 173, 181, 0.15);
+      border: 1px solid rgba(255,255,255,0.08);
+      backdrop-filter: blur(8px);
+      transition: 0.3s ease;
+    }
+    .card:hover {
+      transform: translateY(-8px);
+      box-shadow: 0 15px 50px rgba(0,0,0,0.75), 
+                  0 0 25px rgba(0, 173, 181, 0.2);
+      border-color: rgba(0, 173, 181, 0.35);
+    }
 
-        .tile {
-            background: white;
-            border: 2px solid gold;
-            border-radius: 10px;
-            padding: 15px;
-            margin-top: 15px;
-        }
-    </style>
+    input[type="file"] {
+      background: #111;
+      padding: 14px;
+      border-radius: 8px;
+      border: 1px solid #333;
+      color: #ccc;
+      width: 90%;
+      cursor: pointer;
+      transition: 0.3s;
+      margin-bottom: 18px;
+    }
+    input[type="file"]:hover {
+      border-color: #00adb5;
+      color: #00adb5;
+      box-shadow: 0 0 10px rgba(0, 173, 181, 0.3);
+    }
+
+    button {
+      background: linear-gradient(90deg, #00adb5, #03d7e1);
+      border: none;
+      padding: 12px 30px;
+      color: #fff;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 16px;
+      font-weight: 500;
+      letter-spacing: 0.5px;
+      transition: 0.3s ease;
+      box-shadow: 0 4px 15px rgba(0, 173, 181, 0.3);
+    }
+    button:hover {
+      transform: scale(1.08);
+      box-shadow: 0 6px 20px rgba(0, 173, 181, 0.5);
+    }
+
+    img {
+      margin-top: 25px;
+      border-radius: 16px;
+      width: 350px;
+      border: 1px solid rgba(255,255,255,0.15);
+      box-shadow: 0 0 20px rgba(0, 173, 181, 0.3),
+                  0 0 40px rgba(0, 173, 181, 0.1);
+      animation: fadeIn 0.7s ease;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: scale(0.95); }
+      to { opacity: 1; transform: scale(1); }
+    }
+
+    h3 {
+      margin-top: 25px;
+      font-weight: 600;
+      font-size: 20px;
+      letter-spacing: 1px;
+      text-shadow: 0 0 10px rgba(255,255,255,0.3);
+    }
+
+    p {
+      font-size: 14px;
+      opacity: 0.9;
+    }
+
+    .error {
+      color:#ff6b6b; 
+      font-weight:600;
+      text-shadow: 0 0 8px rgba(255, 80, 80, 0.4);
+      margin-top: 15px;
+      font-size: 15px;
+    }
+
+  </style>
 </head>
+
 <body>
 
-    <div class="navbar">Welcome Administrator</div>
+  <div class="title">DeepFake Detector</div>
 
-    <div class="section">
-        <h2>User Profile</h2>
-        <p>Name: John Doe</p>
-        <p>Email: john@example.com</p>
-    </div>
+  <div class="card">
 
-    <div class="section">
-        <h2>Insights</h2>
-        <div class="tile">
-            <span class="icon">⚠️</span>Delayed Shipments: 12
-        </div>
-        <div class="tile">
-            <span class="icon">ℹ️</span>Warehouse Capacity: 75%
-        </div>
-    </div>
+    <form method="POST" enctype="multipart/form-data">
+      <input type="file" name="image" accept="image/*" required>
+      <br>
+      <button type="submit">Check</button>
+    </form>
 
-    <div class="section">
-        <h2>Recent Activity</h2>
-        <div class="tile">Shipment #1234 Updated</div>
-        <div class="tile">Inventory Sync Completed</div>
-    </div>
+    {% if label %}
+      <h3>Prediction: {{ label }}</h3>
+      <img src="{{ image_path }}" alt="Uploaded Image">
+
+    {% elif error %}
+      <p class="error">{{ error }}</p>
+    {% endif %}
+  </div>
 
 </body>
 </html>
+
 
 
